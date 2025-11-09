@@ -15,7 +15,7 @@ class BinarySearchTree {
   }
 
   add(data) {
-    const newNode = new Node(data);
+    const newNode = { ...new Node(data) };
 
     if (this.rootNode === null) {
       this.rootNode = newNode;
@@ -23,7 +23,7 @@ class BinarySearchTree {
     }
 
     const attachNode = (nodeToAttach, branchNode) => {
-      if (branchNode.data < nodeToAttach.data) {
+      if (nodeToAttach.data < branchNode.data) {
         if (branchNode.left === null) {
           branchNode.left = nodeToAttach;
         } else {
@@ -47,43 +47,62 @@ class BinarySearchTree {
     const findNode = (dataToFind, branchNode) => {
       if (branchNode.data === dataToFind) return branchNode;
 
-      if (branchNode.data < dataToFind) {
+      if (dataToFind < branchNode.data) {
         if (branchNode.left === null) return null;
-        findNode(dataToFind, branchNode.left);
+        return findNode(dataToFind, branchNode.left);
       } else {
         if (branchNode.right === null) return null;
-        findNode(dataToFind, branchNode.right);
+        return findNode(dataToFind, branchNode.right);
       }
     };
 
-    return findNode(data);
+    return findNode(data, this.rootNode);
   }
 
   has(data) {
-    return find(data) !== null;
+    return this.find(data) !== null;
   }
 
   remove(data) {
     if (this.rootNode === null) return;
 
+    const collectExcept = (branchNode, except) => {
+      let collected = [];
+      if (branchNode.data !== except) {
+        collected.push(branchNode.data);
+      }
+      if (branchNode.left !== null)
+        collected = [...collected, ...collectExcept(branchNode.left, except)];
+      if (branchNode.right !== null)
+        collected = [...collected, ...collectExcept(branchNode.right, except)];
+
+      return collected;
+    };
+
     const deleteNode = (dataToDelete, branchNode, branchNodeParent) => {
       if (branchNode.data === dataToDelete) {
+        const toReinsert = collectExcept(branchNode, dataToDelete);
+
         if (branchNodeParent === null) {
           this.rootNode = null;
-          return;
         } else if (branchNodeParent.left === branchNode) {
           branchNodeParent.left = null;
         } else {
           branchNodeParent.right = null;
         }
+
+        for (let i = 0; i < toReinsert.length; i += 1) {
+          this.add(toReinsert[i]);
+        }
+        return;
       }
 
-      if (branchNode.data < dataToDelete) {
+      if (dataToDelete < branchNode.data) {
         if (branchNode.left === null) return;
-        findNode(dataToDelete, branchNode.left, branchNode);
+        deleteNode(dataToDelete, branchNode.left, branchNode);
       } else {
         if (branchNode.right === null) return;
-        findNode(dataToDelete, branchNode.right, branchNode);
+        deleteNode(dataToDelete, branchNode.right, branchNode);
       }
     };
 
